@@ -77,7 +77,13 @@ https://mp.weixin.qq.com/
 https://open.weixin.qq.com/connect/oauth2/authorize?appid=APPID&redirect_uri=REDIRECT_URI&response_type=code&scope=SCOPE&state=STATE#wechat_redirect
 ```
 
+参数说明：
 
+参数 | 是否必须 | 说明 		
+-----|------|----
+a    | b    | c
+d    | e    | f
+g    | h    | i
 
 
 
