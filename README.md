@@ -25,7 +25,7 @@ WeiXin web page authorization process
 https://mp.weixin.qq.com/
 
 ## 2.2 平台界面预览
-
+![Alt text](https://raw.githubusercontent.com/yaoningvital/MarkdownImages/master/images/wx/wx-platform.png "微信公众平台界面")
 
 ## 2.2 平台作用
 
