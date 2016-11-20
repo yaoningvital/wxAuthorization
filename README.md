@@ -263,7 +263,183 @@ unionid | 只有在用户将公众号绑定到微信开放平台帐号后，才�
 ![Alt text](https://raw.githubusercontent.com/yaoningvital/MarkdownImages/master/images/wx/wechatLoading-done.png)
  
  
- 
+
+# 5、微信JS-SDK
+
+## 5.1微信JS-SDK概述
+
+1. 微信JS-SDK是微信公众平台面向网页开发者提供的基于微信内的网页开发工具包。
+
+1. 通过使用微信JS-SDK，网页开发者可借助微信高效地使用拍照、选图、语音、位置等手机系统的能力，同时可以直接使用微信分享、扫一扫、卡券、支付等微信特有的能力，为微信用户提供更优质的网页体验。
+
+
+## 5.2微信JS-SDK使用步骤
+
+### 步骤一：绑定域名 
+先登录微信公众平台进入“公众号设置”的“功能设置”里填写“JS接口安全域名”。
+
+![设置JS接口安全域名](https://raw.githubusercontent.com/yaoningvital/MarkdownImages/master/images/wx/JS-API-safety-DomainName.png)
+
+### 步骤二：引入JS文件
+在index.html页面引入如下JS文件：http://res.wx.qq.com/open/js/jweixin-1.0.0.js
+
+![引入JS-SDK](https://raw.githubusercontent.com/yaoningvital/MarkdownImages/master/images/wx/link-JS-SDK.png)
+
+### 步骤三：通过config接口注入权限验证配置
+所有需要使用JS-SDK的页面必须先注入配置信息，否则将无法调用。
+
+```
+wx.config({
+    debug: true, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+    appId: '', // 必填，公众号的唯一标识
+    timestamp: , // 必填，生成签名的时间戳，调用server端接口获得（由server端生成）
+    nonceStr: ‘’, // 必填，生成签名的随机串，调用server端接口获得（由server端生成）
+    signature: ‘’,// 必填，签名，调用server端接口获得（由server端生成）    
+    jsApiList: [] // 必填，需要使用的JS接口列表
+});
+```
+
+#### 5.2.1 signature签名算法
+
+** 1.由服务端调用接口(http请求方式: GET )： **
+
+```
+https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET
+```
+
+获取access_token（有效期7200秒，开发者必须在自己的服务全局缓存access_token）
+
+** 2.用第一步拿到的access_token 采用http GET方式请求获得jsapi_ticket（有效期7200秒，开发者必须在自己的服务全局缓存jsapi_ticket）： **
+
+```
+https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=ACCESS_TOKEN&type=jsapi
+```
+
+成功返回如下JSON：
+```
+{
+"errcode":0,
+"errmsg":"ok",
+"ticket":"bxLdikRXVbTPdHSM05e5u5sUoXNKd8-41ZO3MhKoyN5OfkWITDGgnr2fwJ0m9E8NYzWKVZvdVtaUgWvsdshFKA",
+"expires_in":7200
+}
+```
+
+获得jsapi_ticket之后，就可以生成JS-SDK权限验证的签名了。
+
+** 签名算法 **
+签名生成规则如下：参与签名的字段包括noncestr（随机字符串）, 有效的jsapi_ticket, timestamp（时间戳）, url（当前网页的URL，不包含#及其后面部分） 。对所有待签名参数按照字段名的ASCII 码从小到大排序（字典序）后，使用URL键值对的格式（即key1=value1&key2=value2…）拼接成字符串string1。这里需要注意的是所有参数名均为小写字符。对string1作sha1加密，字段名和字段值都采用原始值，不进行URL 转义。
+
+
+通过config接口注入权限验证配置在index.run.js中执行：
+![通过config接口注入权限验证配置](https://raw.githubusercontent.com/yaoningvital/MarkdownImages/master/images/wx/config.png)
+
+
+### 步骤四：通过ready接口处理成功验证
+
+```
+wx.ready(function(){
+    // config信息验证后会执行ready方法，所有接口调用都必须在config接口获得结果之后，config是一个客户端的异步操作，所以如果需要在页面加载时就调用相关接口，则须把相关接口放在ready函数中调用来确保正确执行。对于用户触发时才调用的接口，则可以直接调用，不需要放在ready函数中。
+});
+```
+
+### 步骤五：通过error接口处理失败验证
+
+```
+wx.error(function(res){
+    // config信息验证失败会执行error函数，如签名过期导致验证失败，具体错误信息可以打开config的debug模式查看，也可以在返回的res参数中查看，对于SPA可以在这里更新签名。
+});
+```
+
+![通过config接口注入权限验证配置](https://raw.githubusercontent.com/yaoningvital/MarkdownImages/master/images/wx/config-success-fail.png)
+
+
+## 5.3微信支付
+
+在JS-SDK引入成功，权限验证配置信息注入成功之后，可通过调用wx对象的chooseWXPay接口发起一个微信支付请求。
+
+```
+wx.chooseWXPay({
+    timestamp: 0, // 支付签名时间戳，注意微信jssdk中的所有使用timestamp字段均为小写。但最新版的支付后台生成签名使用的timeStamp字段名需大写其中的S字符
+    nonceStr: '', // 支付签名随机串，不长于 32 位
+    package: '', // 统一支付接口返回的prepay_id参数值，提交格式如：prepay_id=***）
+    signType: '', // 签名方式，默认为'SHA1'，使用新版支付需传入'MD5'
+    paySign: '', // 支付签名
+    success: function (res) {
+        // 支付成功后的回调函数
+    }
+});
+```
+
+前5个参数，均来自于调用统一用户端请求支付接口后返回的数据
+
+### 5.3.1微信支付的数据准备
+
+** 1、准备好该订单的相关数据data； **
+
+```
+data = {
+	body: '',  //商品名称
+	out_trade_no: '',  //订单号
+	total_fee: '',    //订单价格
+	openid: '',   //用户的openid
+	orderUserId: ''  //用户的userid
+};
+```
+
+** 2、将data转换成Json字符串，再进行base64编码，得到encodeDataJson； **
+
+** 3、将encodeDataJson作为data参数的值放入prePayData对象中； **
+
+```
+prePayData = {
+	appCode: '',
+	payType: '',
+	terminalType: '',
+	data: ''
+};
+```
+
+** 4、调server端接口，将prePayData传给server端，server端返回一个经过加密的数据encData； **
+
+** 5、将第2步得到的数据encodeDataJson作为data参数的值、将第4步得到的数据encData作为encData参数的值放入payData对象中； **
+
+```
+payData = {
+	appCode: '',
+	payType: '',
+	terminalType: '',
+	data: '',
+	encData: ''
+};
+
+```
+
+** 6、调统一用户端接口，将上一步得到的payData数据传给统一用户端，统一用户端将返回调微信支付接口wx.chooseWXPay时所需的数据（timestamp、nonceStr、package、signType、paySign）； **
+
+### 5.3.2微信支付配置-添加支付授权目录
+
+在进行微信支付时，微信要求：所有使用公众号支付方式发起支付请求的链接地址，都必须在支付授权目录之下。我们需要到微信公众平台中添加支付授权目录，否则，在调用微信支付接口时，将报错。如下图所示：
+
+![支付授权目录](https://raw.githubusercontent.com/yaoningvital/MarkdownImages/master/images/wx/allow-pay-directory.png)
+
+** 注意： **
+1、添加支付授权目录在公众平台微信支付开发配置公众号支付 中；
+2、支付授权目录最多只能设置3个；
+3、支付授权目录为实际支付页面的上一级目录；
+4、IOS系统和Android系统对应的需配置的支付授权目录不一样。IOS系统：调微信接口获取code时设置的重定向的页面（wechatLoading页面）的上一级目录；Android系统：系统中实际支付页面（payStyle）的上一级目录；
+
+
+# 6、免登录
+
+原系统中，如果在调server端接口时出现session超时或者access_token失效的情况，server端会返回code=2或者code=3；这时会跳转到登录页面，需要重新登录。
+
+在微信中，需要实现免登录，即任何情况下都不能出现登录页面。当调server端接口，server端返回code=2或者code=3时，需要做相关处理。
+
+![code==2时](https://raw.githubusercontent.com/yaoningvital/MarkdownImages/master/images/wx/code%20return%202.png)
+
+![code==3时](https://raw.githubusercontent.com/yaoningvital/MarkdownImages/master/images/wx/code%20return%203.png)
+
 
 
 
