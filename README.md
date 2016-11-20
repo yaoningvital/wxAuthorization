@@ -234,7 +234,36 @@ unionid | 只有在用户将公众号绑定到微信开放平台帐号后，才�
   state | 否 | 重定向后会带上state参数，开发者可以填写a-zA-Z0-9的参数值，最多128字节
   #wechat_redirect | 是 | 无论直接打开还是做页面302重定向时候，必须带此参数
 
-  
+
+  由于是静默授权，不会弹出请求授权的页面，用户无感知，微信会返回一个code，页面将跳转至 redirect_uri/?code=CODE&state=STATE。
+
+  在我们的系统中（以“体检预约”为例），页面将跳转至wechatLoading页面：
+
+ http://im-wechat.ikang.com/#/thirdPart/wechatLoading?from=6&isappinstalled=0&targetState=packageList&code=CODE&state=STATE
  
+ 注：这里需要说明一下，在2016年11月16日中午12点之前微信回调回来的地址还是上面这个，但是在2016年11月16日中午12点之后，回调回来的地址就是下面这个了：
+ 
+ http://im-wechat.ikang.com/?code=CODE&state=STATE#/thirdPart/wechatLoading/?from=6&isappinstalled=0&targetState=packageList
+ 
+ 它把redirect_uri中#之前的地址认为是回调地址，然后在后面加上参数code和state，然后把redirect_uri中#之后的部分放在这个后面，然后再把redirect_uri中我自带的参数from、isappinstalled、targetState再放到这个后面，重定向回来。
+ 
+ 这个地址也能跳转到wechatLoading页面。
+ 
+
+**第二步，在wechatLoading中通过code拿到open_id，传给统一用户端判断该用户是否已经绑定手机号，如果没有，跳转绑手机号页面，绑定手机号之后，为用户自动创建一个账户，为用户自动登录我们的系统平台，如果已经绑定过，直接为用户自动登录我们的系统平台**
+ 
+ 在页面重定向到wechatLoading页面之后，需要在这个页面做一些工作。
+ 
+ 第一，就是拿到code、from、targetState的值；
+ 
+ 第二，调server端的getOpenId的接口，将code传给server端，server端拿到code后，调微信的网页授权流程第二步的接口，拿到该用户针对该服务号的open_id，server端拿到open_id，传给统一用户端，统一用户端拿到open_id后去判断该用户是否已经在我们的系统中创建账户了，如果已经创建了，说明该用户已经在我们的系统中绑定过手机号了，那么统一用户端直接给该用户创建登录的access_token，自动登录，将access_token传给server端，server端将access_token传给前端，前端拿到access_token，直接存到cookies中，然后跳转到相应的页面页面（比如体检预约页面packageList）；如果统一用户端拿到open_id之后，判断该用户还没有在我们的系统中注册过（没有在我们的系统中创建过账户），即没有绑定过手机号，那么统一用户端将只将open_id回传给server端，server端将open_id传给前端，前端只拿到了open_id，没有拿到access_token，说明该用户没有绑定过手机号，于是前端就跳转到绑定手机号的页面，让用户进行绑定手机号的操作，手机号绑定成功之后，统一用户端会根据手机号和open_id为用户创建账户，然后将access_token传给前端，前端拿到access_token，将之存入cookies，然后跳转业务页面（比如跳转体检预约packageList）。
+ 
+ 以上这些判断都是在wechatLoading中进行的。如下图所示：
+
+![Alt text](https://raw.githubusercontent.com/yaoningvital/MarkdownImages/master/images/wx/wechatLoading-done.png)
+ 
+ 
+ 
+
 
 
