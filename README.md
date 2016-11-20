@@ -375,7 +375,7 @@ wx.chooseWXPay({
 
 ### 5.3.1微信支付的数据准备
 
-** 1、准备好该订单的相关数据data； **
+**1、准备好该订单的相关数据data；**
 
 ```
 data = {
@@ -387,9 +387,9 @@ data = {
 };
 ```
 
-** 2、将data转换成Json字符串，再进行base64编码，得到encodeDataJson； **
+**2、将data转换成Json字符串，再进行base64编码，得到encodeDataJson；**
 
-** 3、将encodeDataJson作为data参数的值放入prePayData对象中； **
+**3、将encodeDataJson作为data参数的值放入prePayData对象中；**
 
 ```
 prePayData = {
@@ -400,9 +400,9 @@ prePayData = {
 };
 ```
 
-** 4、调server端接口，将prePayData传给server端，server端返回一个经过加密的数据encData； **
+**4、调server端接口，将prePayData传给server端，server端返回一个经过加密的数据encData；**
 
-** 5、将第2步得到的数据encodeDataJson作为data参数的值、将第4步得到的数据encData作为encData参数的值放入payData对象中； **
+**5、将第2步得到的数据encodeDataJson作为data参数的值、将第4步得到的数据encData作为encData参数的值放入payData对象中；**
 
 ```
 payData = {
@@ -415,7 +415,7 @@ payData = {
 
 ```
 
-** 6、调统一用户端接口，将上一步得到的payData数据传给统一用户端，统一用户端将返回调微信支付接口wx.chooseWXPay时所需的数据（timestamp、nonceStr、package、signType、paySign）； **
+**6、调统一用户端接口，将上一步得到的payData数据传给统一用户端，统一用户端将返回调微信支付接口wx.chooseWXPay时所需的数据（timestamp、nonceStr、package、signType、paySign）；**
 
 ### 5.3.2微信支付配置-添加支付授权目录
 
