@@ -423,7 +423,7 @@ payData = {
 
 ![支付授权目录](https://raw.githubusercontent.com/yaoningvital/MarkdownImages/master/images/wx/allow-pay-directory.png)
 
-** 注意： **
+**注意：**
 1、添加支付授权目录在公众平台微信支付开发配置公众号支付 中；
 2、支付授权目录最多只能设置3个；
 3、支付授权目录为实际支付页面的上一级目录；
